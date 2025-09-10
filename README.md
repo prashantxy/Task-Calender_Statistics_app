@@ -1,36 +1,177 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Calendar Statistics App
 
-## Getting Started
+A Next.js 15 application that connects to your Google Calendar and provides detailed statistics and insights about your scheduling patterns.
 
-First, run the development server:
+## Features
 
+- **Google OAuth Integration**: Secure authentication with Google
+- **Comprehensive Statistics**: 
+  - Total events and meeting counts
+  - Average meeting duration
+  - Busiest day identification
+  - Time distribution analysis (morning/afternoon/evening)
+  - Weekly distribution patterns
+  - Meeting vs personal event breakdown
+  - Recurring vs one-time events
+  - Upcoming events tracking
+  - Meeting-free time calculation
+
+- **Visual Analytics**: Interactive charts and graphs using Recharts
+- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+- **Real-time Data**: Fresh calendar data with refresh functionality
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Authentication**: NextAuth.js v4
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
+- **Package Manager**: pnpm
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- pnpm
+- Google Cloud Console project with Calendar API enabled
+
+### Setup
+
+1. **Clone and install dependencies:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd calendar-stats-app
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Create Google OAuth App:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing
+   - Enable Google Calendar API
+   - Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
+   - Set application type to "Web application"
+   - Add authorized redirect URIs:
+     - `http://localhost:3000/api/auth/callback/google` (development)
+     - `https://yourdomain.com/api/auth/callback/google` (production)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Environment Variables:**
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Fill in your values:
+```env
+NEXTAUTH_SECRET=your-secret-key-here
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_SECRET_KEY=your-google-client-secret
+NEXTAUTH_URL=http://localhost:3000
+```
 
-## Learn More
+4. **Run the development server:**
+```bash
+pnpm dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Visit `http://localhost:3000`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment on Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Push to GitHub:**
+```bash
+git add .
+git commit -m "Initial commit"
+git push origin main
+```
 
-## Deploy on Vercel
+2. **Deploy to Vercel:**
+   - Connect your GitHub repo to Vercel
+   - Add environment variables in Vercel dashboard
+   - Update `NEXTAUTH_URL` to your Vercel domain
+   - Update Google OAuth redirect URLs to include your Vercel domain
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Update Google OAuth settings:**
+   - Add your Vercel domain to authorized origins
+   - Add `https://yourdomain.vercel.app/api/auth/callback/google` to redirect URIs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+calendar-stats-app/
+├── app/
+│   ├── api/
+│   │   ├── auth/[...nextauth]/route.ts
+│   │   └── calendar/events/route.ts
+│   ├── auth/signin/page.tsx
+│   ├── components/
+│   │   ├── dashboard.tsx
+│   │   ├── loading-spinner.tsx
+│   │   └── session-provider.tsx
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── lib/
+│   ├── auth.ts
+│   └── calendar-utils.ts
+├── types/
+│   ├── calendar.ts
+│   └── next-auth.d.ts
+├── auth.ts
+├── middleware.ts
+└── package.json
+```
+
+## Key Components
+
+- **Authentication**: NextAuth.js with Google provider
+- **Data Fetching**: Google Calendar API integration
+- **Analytics**: Custom calendar event analysis functions
+- **UI**: Responsive dashboard with interactive charts
+- **Security**: Secure token handling and API routes
+
+## Statistics Provided
+
+1. **Basic Metrics**: Total events, meetings with guests, personal events
+2. **Time Analysis**: Average duration, busiest day, time distribution
+3. **Pattern Recognition**: Weekly distribution, recurring vs one-time events
+4. **Productivity Insights**: Meeting-free hours, upcoming events
+
+## Development Notes
+
+- Uses Next.js 15 App Router for modern React patterns
+- NextAuth.js v5 for enhanced authentication
+- TypeScript for type safety
+- Tailwind CSS for rapid UI development
+- Recharts for data visualization
+- Google Calendar API for real-time data
+
+## Troubleshooting
+
+**Authentication Issues:**
+- Verify Google OAuth credentials
+- Check redirect URLs match exactly
+- Ensure Calendar API is enabled
+
+**Data Loading Issues:**
+- Check calendar permissions
+- Verify API scopes in Google Console
+- Review browser console for errors
+
+**Build Issues:**
+- Ensure all dependencies are installed with `pnpm install`
+- Check TypeScript errors with `pnpm build`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
