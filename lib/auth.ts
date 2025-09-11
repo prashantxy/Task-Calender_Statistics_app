@@ -1,32 +1,22 @@
-import { NextAuthOptions } from "next-auth";
+import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-// Load client ID/secret from env
-const clientId =
-  process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
-const clientSecret =
-  process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
-
-// Fail fast if missing
-if (!clientId || !clientSecret) {
-  throw new Error("Missing Google OAuth client ID or secret in environment variables");
-}
-
-// Mask secret for logging (avoid leaking full secret)
-const maskedSecret = `${clientSecret.slice(0, 4)}...${clientSecret.slice(-4)}`;
-
-console.log("Env Check - Google Client ID:", clientId);
-console.log("Env Check - Google Client Secret (masked):", maskedSecret);
-console.log("Env Check - NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
-
-// Helper: refresh Google access token
 async function refreshAccessToken(token: any) {
   try {
+    console.log(" Attempting to refresh access token...");
+    console.log("Has refresh token:", !!token.refreshToken);
+    
+    if (!token.refreshToken) {
+      throw new Error("No refresh token available");
+    }
+    
     const url = "https://oauth2.googleapis.com/token";
-
+    
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -36,33 +26,40 @@ async function refreshAccessToken(token: any) {
     });
 
     const refreshedTokens = await response.json();
+    console.log(" Refresh response status:", response.status);
 
-    if (!response.ok) throw refreshedTokens;
+    if (!response.ok) {
+      console.error(" Failed to refresh token:", refreshedTokens);
+      throw new Error(refreshedTokens.error || "Failed to refresh token");
+    }
 
-    console.log("Access token refreshed successfully");
+    console.log(" Successfully refreshed access token");
+    console.log("New token expires in:", refreshedTokens.expires_in, "seconds");
 
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // fallback to old refresh token
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
-    console.error("Error refreshing access token", error);
-    return { ...token, error: "RefreshAccessTokenError" as const };
+    console.error(" Error refreshing access token:", error);
+    
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   }
 }
 
-export const authOptions: NextAuthOptions = {
-  debug: true,
+export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
-      clientId,
-      clientSecret,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope:
-            "openid email profile https://www.googleapis.com/auth/calendar.readonly",
+          scope: "openid email profile https://www.googleapis.com/auth/calendar.readonly",
           access_type: "offline",
           prompt: "consent",
         },
@@ -70,46 +67,78 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account }) {
-      // Initial sign-in
-      if (account) {
-        console.log("JWT Callback - New login, storing tokens");
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        token.accessTokenExpires = Date.now() + account.expires_at! * 1000;
+    async jwt({ token, account, user }) {
+      console.log("🔑 JWT Callback triggered");
+      console.log("Is initial login:", !!account);
+      console.log("Current token expires:", token.accessTokenExpires ? new Date(token.accessTokenExpires as number) : 'Never');
+      console.log("Current time:", new Date());
+      
+      if (account && user) {
+        console.log(" Initial sign in - storing tokens");
+        console.log("Has refresh_token:", !!account.refresh_token);
+        console.log("Access token expires at:", new Date((account.expires_at as number) * 1000));
+        
+        if (!account.refresh_token) {
+          console.warn(" WARNING: No refresh token received! This might cause auth issues.");
+        }
+        
+        return {
+          accessToken: account.access_token,
+          accessTokenExpires: (account.expires_at as number) * 1000,
+          refreshToken: account.refresh_token,
+          user,
+        };
+      }
+      const buffer = 5 * 60 * 1000; // 5 minutes
+      const tokenExpiresAt = token.accessTokenExpires as number;
+      const timeUntilExpiry = tokenExpiresAt - Date.now();
+      
+      console.log("Time until token expiry:", Math.round(timeUntilExpiry / 1000 / 60), "minutes");
+      
+      if (Date.now() < (tokenExpiresAt - buffer)) {
+        console.log("Token still valid, returning existing token");
         return token;
       }
 
-      // Return current token if not expired yet
-      if (Date.now() < (token.accessTokenExpires as number)) {
-        console.log("JWT Callback - Existing token still valid");
-        return token;
+      console.log(" Token expired or expiring soon, refreshing...");
+      
+      // Check if we have a refresh token
+      if (!token.refreshToken) {
+        console.error(" No refresh token available for refresh");
+        return {
+          ...token,
+          error: "RefreshAccessTokenError",
+        };
       }
 
-      // Otherwise, refresh it
-      console.log("JWT Callback - Access token expired, refreshing...");
+      // Refresh the access token
       return await refreshAccessToken(token);
     },
-
+    
     async session({ session, token }) {
-      console.log("Session Callback Triggered");
-
-      if (token.accessToken) {
-        (session as any).accessToken = token.accessToken;
-        console.log("Added accessToken to session");
-      }
-      if (token.refreshToken) {
-        (session as any).refreshToken = token.refreshToken;
-        console.log("Added refreshToken to session");
-      }
-      if (token.error) {
-        (session as any).error = token.error;
-      }
-
+      console.log("🔍 Session callback");
+      console.log("Has access token:", !!token.accessToken);
+      console.log("Has refresh token:", !!token.refreshToken);
+      console.log("Has error:", !!token.error);
+      
+      session.user = token.user as any;
+      (session as any).accessToken = token.accessToken;
+      (session as any).refreshToken = token.refreshToken;
+      (session as any).error = token.error;
+      
       return session;
     },
   },
+  
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/error",
   },
+  
+  debug: process.env.NODE_ENV === "development",
 };
