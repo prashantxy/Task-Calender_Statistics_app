@@ -10,7 +10,7 @@ export default function LoadingSpinner() {
           </div>
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Loading Your Calendar Data
+          Loading...
         </h2>
         <p className="text-gray-600 mb-4">
           Analyzing your events and generating insights...

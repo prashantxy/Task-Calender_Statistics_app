@@ -58,39 +58,30 @@ export default function Dashboard({ stats, events, session, onRefresh }: Dashboa
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Calendar Statistics</h1>
-                <p className="text-sm text-gray-500"> 
-                  Welcome, {session?.user?.name || session?.user?.email || 'User'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onRefresh}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </button>
-              <button
-                onClick={() => signOut()}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </button>
-            </div>
+  {/* Header */}
+  <div className="bg-white shadow-sm border-b">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center h-auto sm:h-16 py-4 sm:py-0">
+        <div className="flex items-center mb-3 sm:mb-0">
+          <Calendar className="h-8 w-8 text-blue-600 mr-3" />
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Calendar Statistics</h1>
+            <p className="text-sm text-gray-500"> 
+              Welcome, {session?.user?.name || session?.user?.email || 'User'}
+            </p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <button onClick={onRefresh} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+          </button>
+          <button onClick={() => signOut()} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            <LogOut className="h-4 w-4 mr-2" /> Sign Out
+          </button>
+        </div>
       </div>
-
+    </div>
+  </div>
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Key Metrics */}
