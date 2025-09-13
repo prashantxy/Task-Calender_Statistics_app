@@ -2,6 +2,10 @@
 
 A Next.js 15 application that connects to your Google Calendar and provides detailed statistics and insights about your scheduling patterns.
 
+#currently in testing phase still not verified by google so taking down from production. If wanna see how it work then.
+
+See this 
+https://www.loom.com/share/d8bdaf3c03ca409faebb4e33d7ec4961?sid=3ce1b780-31ad-44da-97e1-f8c3affe90d4
 ## Features
 
 - **Google OAuth Integration**: Secure authentication with Google
